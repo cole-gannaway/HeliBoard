@@ -55,6 +55,7 @@ import helium314.keyboard.latin.utils.getPinnedToolbarKeys
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.removeFirst
 import helium314.keyboard.latin.utils.removePinnedKey
+import helium314.keyboard.latin.utils.setToolbarButtonActivatedState
 import helium314.keyboard.latin.utils.setToolbarButtonsActivatedStateOnPrefChange
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
@@ -502,8 +503,14 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
 
     fun updateVoiceKey() {
         val show = Settings.getValues().mShowsVoiceInputKey
-        toolbar.findViewWithTag<View>(ToolbarKey.VOICE)?.isVisible = show
-        pinnedKeys.findViewWithTag<View>(ToolbarKey.VOICE)?.isVisible = show
+        (toolbar.findViewWithTag<View>(ToolbarKey.VOICE) as? ImageButton)?.let {
+            it.isVisible = show
+            setToolbarButtonActivatedState(it)
+        }
+        (pinnedKeys.findViewWithTag<View>(ToolbarKey.VOICE) as? ImageButton)?.let {
+            it.isVisible = show
+            setToolbarButtonActivatedState(it)
+        }
     }
 
     private fun updateKeys() {

@@ -946,6 +946,16 @@ New dictionary:
     <string name="toolbar_only_with_hw_keyboard">Show only toolbar with physical keyboard</string>
     <!-- Description of the setting for showing toolbar only when a hardware keyboard is connected -->
     <string name="toolbar_only_with_hw_keyboard_summary">You still need to enable showing virtual keyboard in system settings</string>
+    <!-- Title of the setting for the self-hosted voice transcription endpoint URL -->
+    <string name="voice_input_endpoint_url">Transcription endpoint URL</string>
+    <!-- Description of the setting for the self-hosted voice transcription endpoint URL -->
+    <string name="voice_input_endpoint_url_summary">An OpenAI-compatible audio transcription endpoint, e.g. https://api.openai.com/v1/audio/transcriptions</string>
+    <!-- Toast shown after the user grants the microphone permission -->
+    <string name="voice_input_permission_granted">Microphone permission granted, tap the mic button again to start recording</string>
+    <!-- Toast shown after the user denies the microphone permission -->
+    <string name="voice_input_permission_denied">Microphone permission denied</string>
+    <!-- Toast shown when recording upload or transcription fails -->
+    <string name="voice_input_transcription_error">Voice transcription failed</string>
     <!-- Title of the settings for adjusting the language swipe gesture distance -->
     <string name="prefs_language_swipe_distance">Switch language swipe distance</string>
     <!-- Title of the setting to customize toolbar key codes -->

@@ -125,6 +125,9 @@ dependencies {
     // kotlin
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
+    // voice input transcription upload
+    implementation("com.squareup.okhttp3:okhttp:5.2.1")
+
     // compose
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(platform("androidx.compose:compose-bom:2025.11.01")) // newer requires minSdk 23

@@ -90,6 +90,9 @@ import helium314.keyboard.latin.utils.SubtypeLocaleUtils;
 import helium314.keyboard.latin.utils.SubtypeSettings;
 import helium314.keyboard.latin.utils.SubtypeState;
 import helium314.keyboard.latin.utils.ToolbarMode;
+import helium314.keyboard.latin.voiceinput.VoiceInputManager;
+import helium314.keyboard.latin.voiceinput.VoiceInputPermissionActivity;
+import helium314.keyboard.latin.voiceinput.VoiceInputState;
 import helium314.keyboard.settings.SettingsActivity2;
 import kotlin.Unit;
 
@@ -551,6 +554,7 @@ public class LatinIME extends InputMethodService implements
         KeyboardIconsSet.Companion.getInstance().loadIcons(this);
         mRichImm = RichInputMethodManager.getInstance();
         AudioAndHapticFeedbackManager.init(this);
+        VoiceInputManager.init(this);
         AccessibilityUtils.init(this);
         mStatsUtilsManager.onCreate(this, mDictionaryFacilitator);
         mDisplayContext = KtxKt.getDisplayContext(this);
@@ -1429,7 +1433,7 @@ public class LatinIME extends InputMethodService implements
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
-            mRichImm.switchToShortcutIme(this);
+            handleVoiceInput();
         }
         final InputTransaction completeInputTransaction =
                 mInputLogic.onCodeInput(mSettings.getCurrent(), event,
@@ -1437,6 +1441,41 @@ public class LatinIME extends InputMethodService implements
                         mKeyboardSwitcher.getCurrentKeyboardScript(), mHandler);
         updateStateAfterInputTransaction(completeInputTransaction);
         mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+    }
+
+    /**
+     * Handles a {@link KeyCode#VOICE_INPUT} event. Tapping while idle starts a recording (after
+     * ensuring the RECORD_AUDIO permission is granted), tapping again stops it and sends the
+     * result off for transcription, committing the returned text once it arrives.
+     */
+    private void handleVoiceInput() {
+        final VoiceInputManager voiceInputManager = VoiceInputManager.getInstance();
+        final VoiceInputState state = voiceInputManager.getState();
+        if (state == VoiceInputState.IDLE) {
+            if (!voiceInputManager.hasRecordAudioPermission()) {
+                final Intent intent = new Intent(this, VoiceInputPermissionActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return;
+            }
+            voiceInputManager.startRecording();
+        } else if (state == VoiceInputState.RECORDING) {
+            voiceInputManager.stopRecordingAndTranscribe(
+                    text -> {
+                        onTextInput(text);
+                        if (hasSuggestionStripView())
+                            mSuggestionStripView.updateVoiceKey();
+                        return Unit.INSTANCE;
+                    },
+                    error -> {
+                        mKeyboardSwitcher.showToast(getString(R.string.voice_input_transcription_error), true);
+                        if (hasSuggestionStripView())
+                            mSuggestionStripView.updateVoiceKey();
+                        return Unit.INSTANCE;
+                    });
+        } // else TRANSCRIBING: ignore taps while a transcription request is already in flight
+        if (hasSuggestionStripView())
+            mSuggestionStripView.updateVoiceKey();
     }
 
     public void onTextInput(@Nullable String rawText) {

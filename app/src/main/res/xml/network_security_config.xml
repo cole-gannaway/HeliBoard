@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Voice input lets the user point at any self-hosted transcription endpoint. These are
+         commonly on the local network over plain HTTP, or behind a reverse proxy using a
+         self-signed certificate the user has installed themselves, so cleartext traffic and
+         user-installed CAs are both allowed. -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
