@@ -24,7 +24,7 @@
       "symbols": { "$": "keyboard_state_selector", "dpadKeyEnabled": { "label": "dpad" } },
       "dpad": { "label": "symbol" }
     },
-    { "label": "period", "labelFlags": 1073741824 },
+    { "label": "voice", "labelFlags": 1073741824 },
     { "label": "action", "width": 0.15 }
   ]
 ]

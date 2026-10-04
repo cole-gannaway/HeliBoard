@@ -31,7 +31,7 @@
       "symbols": { "$": "keyboard_state_selector", "dpadKeyEnabled": { "label": "dpad" } },
       "dpad": { "label": "symbol" }
     },
-    { "label": "period" },
+    { "label": "voice" },
     { "$": "variation_selector",
       "default":  { "label": "emoji" },
       "email":    { "label": "com" },
