@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -57,6 +58,12 @@ class VoiceInputManager private constructor() {
     @Volatile
     private var isRecording = false
     private var audioFile: File? = null
+
+    // the in-flight upload, so a tap during TRANSCRIBING can abort it instead of waiting it out
+    @Volatile
+    private var activeCall: Call? = null
+    @Volatile
+    private var cancelledByUser = false
 
     private fun initInternal(context: Context) {
         appContext = context.applicationContext
@@ -130,8 +137,12 @@ class VoiceInputManager private constructor() {
                 if (file != null) transcribe(file) else Result.failure(IllegalStateException("No recording found"))
             }
             state = VoiceInputState.IDLE
-            withContext(Dispatchers.Main) {
-                result.fold(onSuccess, onFailure)
+            val wasCancelled = cancelledByUser
+            cancelledByUser = false
+            if (!wasCancelled) {
+                withContext(Dispatchers.Main) {
+                    result.fold(onSuccess, onFailure)
+                }
             }
         }
     }
@@ -144,6 +155,14 @@ class VoiceInputManager private constructor() {
         audioFile?.delete()
         audioFile = null
         state = VoiceInputState.IDLE
+    }
+
+    /** Aborts an in-flight upload/transcription request started by [stopRecordingAndTranscribe]. */
+    fun cancelTranscription() {
+        if (state != VoiceInputState.TRANSCRIBING) return
+        cancelledByUser = true
+        state = VoiceInputState.IDLE // flip back immediately so the UI responds right away
+        activeCall?.cancel()
     }
 
     private fun transcribe(file: File): Result<String> {
@@ -162,7 +181,9 @@ class VoiceInputManager private constructor() {
                 .url(endpointUrl)
                 .post(requestBody)
                 .build()
-            httpClient.newCall(request).execute().use { response ->
+            val call = httpClient.newCall(request)
+            activeCall = call
+            call.execute().use { response ->
                 if (!response.isSuccessful) {
                     return Result.failure(IllegalStateException("Server returned HTTP ${response.code}"))
                 }
@@ -171,9 +192,10 @@ class VoiceInputManager private constructor() {
                 Result.success(transcription.text)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Voice input transcription request failed", e)
+            if (!cancelledByUser) Log.e(TAG, "Voice input transcription request failed", e)
             Result.failure(e)
         } finally {
+            activeCall = null
             file.delete()
         }
     }

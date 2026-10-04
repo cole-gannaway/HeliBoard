@@ -40,6 +40,8 @@ import helium314.keyboard.latin.settings.Settings;
 import helium314.keyboard.latin.suggestions.MoreSuggestions;
 import helium314.keyboard.latin.suggestions.MoreSuggestionsView;
 import helium314.keyboard.latin.utils.TypefaceUtils;
+import helium314.keyboard.latin.voiceinput.VoiceInputManager;
+import helium314.keyboard.latin.voiceinput.VoiceInputState;
 
 import java.util.HashSet;
 
@@ -65,6 +67,9 @@ public class KeyboardView extends View {
     private final Rect mKeyBackgroundPadding = new Rect();
     private static final float KET_TEXT_SHADOW_RADIUS_DISABLED = -1.0f;
     private final Colors mColors;
+    // lazily loaded overrides for the voice input key while recording/transcribing, see onDrawKeyTopVisuals
+    private Drawable mVoiceRecordingIcon;
+    private Drawable mVoiceCancelIcon;
     private float mKeyScaleForText;
     protected float mFontSizeMultiplier;
     protected float mHintFontSizeMultiplier;
@@ -385,8 +390,22 @@ public class KeyboardView extends View {
 
         // Draw key label.
         final Keyboard keyboard = getKeyboard();
-        final Drawable icon = (keyboard == null) ? null
+        Drawable icon = (keyboard == null) ? null
                 : key.getIcon(keyboard.mIconsSet, params.mAnimAlpha);
+        if (key.getCode() == KeyCode.VOICE_INPUT) {
+            final VoiceInputState voiceState = VoiceInputManager.getInstance().getState();
+            if (voiceState == VoiceInputState.RECORDING) {
+                if (mVoiceRecordingIcon == null)
+                    mVoiceRecordingIcon = getContext().getDrawable(R.drawable.sym_keyboard_voice_recording);
+                icon = mVoiceRecordingIcon;
+                if (icon != null) icon.setAlpha(params.mAnimAlpha);
+            } else if (voiceState == VoiceInputState.TRANSCRIBING) {
+                if (mVoiceCancelIcon == null)
+                    mVoiceCancelIcon = getContext().getDrawable(R.drawable.ic_close);
+                icon = mVoiceCancelIcon;
+                if (icon != null) icon.setAlpha(params.mAnimAlpha);
+            }
+        }
         float labelX = centerX;
         float labelBaseline = centerY;
         final String label = key.getLabel();
@@ -638,7 +657,11 @@ public class KeyboardView extends View {
     }
 
     private void setKeyIconColor(Key key, Drawable icon, Keyboard keyboard) {
-        if (key.hasActionKeyBackground()) {
+        if (key.getCode() == KeyCode.VOICE_INPUT
+                && VoiceInputManager.getInstance().getState() == VoiceInputState.RECORDING) {
+            // fixed red regardless of theme, to match the universal "recording" convention
+            icon.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
+        } else if (key.hasActionKeyBackground()) {
             mColors.setColor(icon, ColorType.ACTION_KEY_ICON);
         } else if (key.isShift() && keyboard != null) {
             if (keyboard.mId.getElement().isAlphabetShifted())

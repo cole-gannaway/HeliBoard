@@ -51,6 +51,7 @@ import helium314.keyboard.latin.common.InsetsOutlineProvider;
 import helium314.keyboard.dictionarypack.DictionaryPackConstants;
 import helium314.keyboard.event.Event;
 import helium314.keyboard.event.InputTransaction;
+import helium314.keyboard.keyboard.Key;
 import helium314.keyboard.keyboard.Keyboard;
 import helium314.keyboard.keyboard.KeyboardId;
 import helium314.keyboard.keyboard.KeyboardLayoutSet;
@@ -1446,7 +1447,8 @@ public class LatinIME extends InputMethodService implements
     /**
      * Handles a {@link KeyCode#VOICE_INPUT} event. Tapping while idle starts a recording (after
      * ensuring the RECORD_AUDIO permission is granted), tapping again stops it and sends the
-     * result off for transcription, committing the returned text once it arrives.
+     * result off for transcription, committing the returned text once it arrives. Tapping while
+     * a transcription request is in flight cancels it.
      */
     private void handleVoiceInput() {
         final VoiceInputManager voiceInputManager = VoiceInputManager.getInstance();
@@ -1463,19 +1465,29 @@ public class LatinIME extends InputMethodService implements
             voiceInputManager.stopRecordingAndTranscribe(
                     text -> {
                         onTextInput(text);
-                        if (hasSuggestionStripView())
-                            mSuggestionStripView.updateVoiceKey();
+                        refreshVoiceInputKeyVisuals();
                         return Unit.INSTANCE;
                     },
                     error -> {
                         mKeyboardSwitcher.showToast(getString(R.string.voice_input_transcription_error), true);
-                        if (hasSuggestionStripView())
-                            mSuggestionStripView.updateVoiceKey();
+                        refreshVoiceInputKeyVisuals();
                         return Unit.INSTANCE;
                     });
-        } // else TRANSCRIBING: ignore taps while a transcription request is already in flight
+        } else if (state == VoiceInputState.TRANSCRIBING) {
+            voiceInputManager.cancelTranscription();
+        }
+        refreshVoiceInputKeyVisuals();
+    }
+
+    /** Redraws the voice input key (toolbar icon and/or main keyboard key, whichever is present) after a state change. */
+    private void refreshVoiceInputKeyVisuals() {
         if (hasSuggestionStripView())
             mSuggestionStripView.updateVoiceKey();
+        final MainKeyboardView keyboardView = mKeyboardSwitcher.getMainKeyboardView();
+        final Keyboard keyboard = keyboardView == null ? null : keyboardView.getKeyboard();
+        final Key voiceKey = keyboard == null ? null : keyboard.getKey(KeyCode.VOICE_INPUT);
+        if (voiceKey != null)
+            keyboardView.invalidateKey(voiceKey);
     }
 
     public void onTextInput(@Nullable String rawText) {
