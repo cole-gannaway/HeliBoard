@@ -82,6 +82,7 @@ fun AdvancedSettingsScreen(
         Settings.PREF_CUSTOM_CURRENCY_KEY,
         Settings.PREF_MORE_POPUP_KEYS,
         Settings.PREF_TIMESTAMP_FORMAT,
+        Settings.PREF_VOICE_INPUT_ENDPOINT_URL,
         SettingsWithoutKey.BACKUP_RESTORE,
         if (BuildConfig.DEBUG || prefs.getBoolean(DebugSettings.PREF_SHOW_DEBUG_SETTINGS, Defaults.PREF_SHOW_DEBUG_SETTINGS))
             SettingsWithoutKey.DEBUG_SETTINGS else null,
@@ -230,6 +231,11 @@ fun createAdvancedSettings(context: Context) = listOf(
     },
     Setting(context, Settings.PREF_TIMESTAMP_FORMAT, R.string.timestamp_format_title) { setting ->
         TextInputPreference(setting, Defaults.PREF_TIMESTAMP_FORMAT, stringResource(R.string.timestamp_description)) { checkTimestampFormat(it) }
+    },
+    Setting(context, Settings.PREF_VOICE_INPUT_ENDPOINT_URL,
+        R.string.voice_input_endpoint_url, R.string.voice_input_endpoint_url_summary)
+    {
+        TextInputPreference(it, Defaults.PREF_VOICE_INPUT_ENDPOINT_URL)
     },
     Setting(context, SettingsWithoutKey.DEBUG_SETTINGS, R.string.debug_settings_title) {
         Preference(

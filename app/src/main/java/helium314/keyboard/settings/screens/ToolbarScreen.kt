@@ -32,7 +32,6 @@ import helium314.keyboard.settings.preferences.ListPreference
 import helium314.keyboard.settings.preferences.Preference
 import helium314.keyboard.settings.preferences.ReorderSwitchPreference
 import helium314.keyboard.settings.preferences.SwitchPreference
-import helium314.keyboard.settings.preferences.TextInputPreference
 import helium314.keyboard.latin.utils.previewDark
 
 @Composable
@@ -65,7 +64,6 @@ fun ToolbarScreen(
         if (toolbarMode == ToolbarMode.EXPANDABLE) Settings.PREF_AUTO_HIDE_TOOLBAR else null,
         if (toolbarMode != ToolbarMode.HIDDEN) Settings.PREF_SHOW_ONLY_TOOLBAR_WITH_HARDWARE_KEYBOARD else null,
         if (toolbarMode != ToolbarMode.HIDDEN) Settings.PREF_VARIABLE_TOOLBAR_DIRECTION else null,
-        Settings.PREF_VOICE_INPUT_ENDPOINT_URL,
     )
     SearchSettingsScreen(
         onClickBack = onClickBack,
@@ -143,11 +141,6 @@ fun createToolbarSettings(context: Context) = listOf(
         R.string.var_toolbar_direction, R.string.var_toolbar_direction_summary)
     {
         SwitchPreference(it, Defaults.PREF_VARIABLE_TOOLBAR_DIRECTION)
-    },
-    Setting(context, Settings.PREF_VOICE_INPUT_ENDPOINT_URL,
-        R.string.voice_input_endpoint_url, R.string.voice_input_endpoint_url_summary)
-    {
-        TextInputPreference(it, Defaults.PREF_VOICE_INPUT_ENDPOINT_URL)
     }
 )
 
